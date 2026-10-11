@@ -11,6 +11,8 @@ import (
 )
 
 // TfsStorage tfs存储实现
+// 尚未接入真实服务端，仅为占位实现，不可用于分布式锁。
+// 真正接入时需借助服务端原子语义实现 CAS。
 type TfsStorage struct {
 	mu sync.RWMutex
 }
@@ -25,23 +27,26 @@ const StorageName = "tfs-storage"
 
 func (x *TfsStorage) GetName() string { return StorageName }
 func (x *TfsStorage) Capabilities() []storage.StorageCapability {
-	return []storage.StorageCapability{storage.CapabilityCAS, storage.CapabilityReliableTime}
+	return []storage.StorageCapability{storage.CapabilityReliableTime, storage.CapabilityWatch}
+}
+func (x *TfsStorage) Watch(ctx context.Context, lockId string) (<-chan *storage.LockInformation, error) {
+	return storage.NewPollingLockWatcher(x, 500*time.Millisecond).Watch(ctx, lockId)
 }
 func (x *TfsStorage) Init(ctx context.Context) error { return nil }
 func (x *TfsStorage) CreateWithVersion(ctx context.Context, lockId string, version storage.Version, lockInformation *storage.LockInformation) error {
 	x.mu.Lock()
 	defer x.mu.Unlock()
-	return nil
+	return storage_lock.ErrStorageCapabilityMissing
 }
 func (x *TfsStorage) UpdateWithVersion(ctx context.Context, lockId string, expectedVersion, newVersion storage.Version, lockInformation *storage.LockInformation) error {
 	x.mu.Lock()
 	defer x.mu.Unlock()
-	return nil
+	return storage_lock.ErrStorageCapabilityMissing
 }
 func (x *TfsStorage) DeleteWithVersion(ctx context.Context, lockId string, expectedVersion storage.Version, lockInformation *storage.LockInformation) error {
 	x.mu.Lock()
 	defer x.mu.Unlock()
-	return nil
+	return storage_lock.ErrStorageCapabilityMissing
 }
 func (x *TfsStorage) Get(ctx context.Context, lockId string) (string, error) {
 	x.mu.RLock()
