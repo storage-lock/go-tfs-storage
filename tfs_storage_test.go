@@ -22,9 +22,10 @@ func TestTfsStorageStoragePlaceholder(t *testing.T) {
 	// GetName 非空
 	assert.Equal(t, StorageName, s.GetName())
 
-	// Capabilities：ReliableTime + Watch，不声明 CAS
+	// Capabilities：实现如实声明只有 Watch——GetTime 返回本机时钟，不算可信时间源，
+	// 因此不声明 ReliableTime；写操作返回能力缺失，也不声明 CAS。
 	caps := s.Capabilities()
-	assert.Contains(t, caps, storage.CapabilityReliableTime)
+	assert.NotContains(t, caps, storage.CapabilityReliableTime)
 	assert.NotContains(t, caps, storage.CapabilityCAS)
 
 	// Init / Close 无错
